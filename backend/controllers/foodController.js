@@ -1,10 +1,14 @@
 import { error } from "console";
 import foodModel from "../models/foodModel.js";
 import fs from "fs";
+import path from "path";
 
 //add food item
 
 const addFood = async (req, res) => {
+    if (!req.file) {
+        return res.json({success:false,message:"Image is required"})
+    }
     
     let image_filename = `${req.file.filename}`;
 
@@ -40,7 +44,11 @@ const listFood = async (req, res) => {
 const removeFood = async (req, res) => {
     try{
         const food = await foodModel.findById(req.body.id);
-        fs.unlink(`uploads/${food.image}`,()=>{})
+        if (!food) {
+            return res.json({success:false, message:"Food not found"})
+        }
+
+        fs.unlink(path.join("uploads", path.basename(food.image)),()=>{})
 
         await foodModel.findByIdAndDelete(req.body.id);
         res.json({success:true, message: "Food removed"})

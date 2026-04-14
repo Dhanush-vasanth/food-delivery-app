@@ -18,7 +18,7 @@ const loginUser = async (req, res) => {
         if(!isMatch){
             return res.json({success:false, message:"Invalid credentials"})
         }
-        const token = createToken(user._id)
+        const token = createToken({ id: user._id, role: "user" })
         res.json({success:true, token})
 
     }catch(error){
@@ -26,8 +26,28 @@ const loginUser = async (req, res) => {
         res.json({success:false, message:"Error"})
     }
 }
-const createToken = (id) => {
-    return jwt.sign({id}, process.env.JWT_SECRET)
+const adminLogin = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+            return res.json({ success: false, message: "Admin login is not configured" });
+        }
+
+        if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+            return res.json({ success: false, message: "Invalid admin credentials" });
+        }
+
+        const token = createToken({ id: email, role: "admin" });
+        res.json({ success: true, token });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Error" });
+    }
+};
+
+const createToken = (payload) => {
+    return jwt.sign(payload, process.env.JWT_SECRET)
 }
 
 //register user
@@ -58,7 +78,7 @@ const registerUser = async (req, res) => {
         })
 
         const user = await newUser.save()
-        const token = createToken(user._id)
+        const token = createToken({ id: user._id, role: "user" })
         res.json({success:true,token});
 
     }catch(error){
@@ -67,4 +87,4 @@ const registerUser = async (req, res) => {
     }
 }
 
-export { loginUser, registerUser};
+export { loginUser, registerUser, adminLogin };

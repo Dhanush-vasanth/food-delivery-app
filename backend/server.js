@@ -10,10 +10,18 @@ import orderRouter from "./routes/orderRoute.js";
 // app config
 const app = express();
 const port = 4000;
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
 // middlewares
-app.use(express.json());
-app.use(cors()); 
+app.disable("x-powered-by");
+app.use(express.json({ limit: "1mb" }));
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+}));
 
 // db connection
 connectDB();
@@ -32,7 +40,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 })
-
-//3BvZxvSKMZbMc5rU
-//vasanthmuthukumar7_db_user
-//mongodb+srv://vasanthmuthukumar7_db_user:3BvZxvSKMZbMc5rU@cluster0.thqu6ot.mongodb.net/?appName=Cluster0
