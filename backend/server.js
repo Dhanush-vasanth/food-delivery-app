@@ -9,7 +9,7 @@ import orderRouter from "./routes/orderRoute.js";
 
 // app config
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174")
     .split(",")
     .map((origin) => origin.trim())
