@@ -153,7 +153,7 @@ export const food_list = [
         _id: "5",
         name: "Lasagna Rolls",
         image: food_5,
-        price: 850,
+        price: 550,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Rolls"
     }, {
@@ -210,7 +210,7 @@ export const food_list = [
         _id: "13",
         name: "Chicken Sandwich",
         image: food_13,
-        price: 399,
+        price: 499,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Sandwich"
     },
@@ -239,14 +239,14 @@ export const food_list = [
         _id: "17",
         name: "Cup Cake",
         image: food_17,
-        price: 99,
+        price: 149,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Cake"
     }, {
         _id: "18",
         name: "Vegan Cake",
         image: food_18,
-        price: 199,
+        price: 299,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Cake"
     }, {
@@ -260,7 +260,7 @@ export const food_list = [
         _id: "20",
         name: "Sliced Cake",
         image: food_20,
-        price: 150,
+        price: 200,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Cake"
     }, {
@@ -304,7 +304,7 @@ export const food_list = [
         _id: "26",
         name: "Tomato Pasta",
         image: food_26,
-        price: 299,
+        price: 350,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Pasta"
     }, {
@@ -318,14 +318,14 @@ export const food_list = [
         _id: "28",
         name: "Chicken Pasta",
         image: food_28,
-        price: 799,
+        price: 699,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Pasta"
     }, {
         _id: "29",
         name: "Buttter Noodles",
         image: food_29,
-        price: 299,
+        price: 350,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Noodles"
     }, {
@@ -339,7 +339,7 @@ export const food_list = [
         _id: "31",
         name: "Somen Noodles",
         image: food_31,
-        price: 399,
+        price: 449,
         description: "Food provides essential nutrients for overall health and well-being",
         category: "Noodles"
     }, {
