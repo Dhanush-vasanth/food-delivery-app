@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 const PlaceOrder = () => {
 
   const {getTotalCartAmount,token,food_list,cartItems,url,setToken} = useContext(StoreContext)
+  const navigate = useNavigate();
 
   const [data,setData] = useState({
     firstName:"",
@@ -135,7 +136,6 @@ const PlaceOrder = () => {
   }
 };
 
-const navigate = useNavigate();
 useEffect(() =>{
   if (!token) {
     navigate('/cart')
