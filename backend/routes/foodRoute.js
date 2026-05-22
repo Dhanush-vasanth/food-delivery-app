@@ -1,22 +1,14 @@
 import express from "express";
 import { addFood, listFood, removeFood } from "../controllers/foodController.js";
 import multer from "multer";
-import path from "path";
 import adminAuthMiddleware from "../middleware/adminAuth.js";
 
 
 const foodRouter = express.Router();
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
-// Image storage engine
-
-const storage = multer.diskStorage({
-    destination:"uploads",
-    filename: (req,file,cb) => {
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-        return cb(null, `${Date.now()}-${path.basename(safeName)}`)
-    }
-})
+// Use memory storage for Cloudinary upload
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage,
