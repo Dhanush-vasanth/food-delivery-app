@@ -14,7 +14,7 @@ if (process.env.RAZORPAY_TEST_API_KEY && process.env.RAZORPAY_SECRET_KEY) {
 // Place user order and create Razorpay order
 const placeOrder = async (req, res) => {
 
-  const frontendUrl =  "http://localhost:5173"; // Replace with your actual frontend URL
+  const frontendUrl =  "https://food-delivery-frontend1-qnbb.onrender.com/"; // Replace with your actual frontend URL
 
   try {
     const { items, amount, address } = req.body;
