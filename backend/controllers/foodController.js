@@ -15,8 +15,8 @@ const addFood = async (req, res) => {
     const food = new foodModel ({
         name: req.body.name,
         description: req.body.description,
-        price:req.body.price,
-        category:req.body.category,
+        price: Number(req.body.price),
+        category: req.body.category,
         image: image_filename
     })
     try{
@@ -24,8 +24,8 @@ const addFood = async (req, res) => {
         res.json({success:true,message:"Food Added"})
 
     }catch(error){
-        console.log(error);
-        res.json({success:false,message:"Error in adding food"})
+        console.log("Error saving food:", error);
+        res.json({success:false,message:error.message || "Error in adding food"})
     }
 }
 

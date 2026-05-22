@@ -35,21 +35,43 @@ const StoreContextProvider = (props) => {
         let totalAmount = 0;
         for (const item in cartItems) {
             if (cartItems[item] > 0 ) {
-                let itemInfo =food_list.find ((product) => product._id === item);
-                totalAmount += itemInfo.price * cartItems[item]
+                let itemInfo = food_list.find((product) => product._id === item);
+                if(itemInfo && itemInfo.price) {
+                    totalAmount += itemInfo.price * cartItems[item]
+                }
             }
         }
         return totalAmount;
     }
 
     const fetchFoodList = async () => {
-        const response = await axios.get(url+"/api/food/list");
-        setFoodList (response.data.data);
+        try {
+            const response = await axios.get(url+"/api/food/list");
+            console.log("Food list response:", response.data);
+            
+            if(response.data.success && Array.isArray(response.data.data)) {
+                setFoodList(response.data.data);
+            } else if(Array.isArray(response.data.data)) {
+                setFoodList(response.data.data);
+            } else {
+                console.error("Unexpected response format:", response.data);
+                setFoodList([]);
+            }
+        } catch(error) {
+            console.error("Error fetching food list:", error.message);
+            setFoodList([]);
+        }
     }
 
     const loadCartData = async (token) => {
-        const response = await axios.post(url+"/api/cart/get",{},{headers:{token}})
-        setCartItems(response.data.cartData);
+        try {
+            const response = await axios.post(url+"/api/cart/get",{},{headers:{token}})
+            if(response.data.cartData) {
+                setCartItems(response.data.cartData);
+            }
+        } catch(error) {
+            console.error("Error loading cart data:", error.message);
+        }
     }
 
     useEffect(()=>{

@@ -14,11 +14,14 @@ const adminAuthMiddleware = (req, res, next) => {
             return res.json({ success: false, message: "Admin access required" });
         }
 
+        if (!req.body) {
+            req.body = {};
+        }
         req.body.adminId = tokenDecode.id;
         next();
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error" });
+        console.log("Admin token verification error:", error.message);
+        res.json({ success: false, message: "Invalid or expired token. Please login again." });
     }
 };
 

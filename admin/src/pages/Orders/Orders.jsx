@@ -12,26 +12,53 @@ const Orders = ({url}) => {
   const [orders,setOrders] = useState([]);
 
   const fetchAllOrders = async () => {
-    const responce = await axios.get(url+"/api/order/list");
-    if(responce.data.success){
-      setOrders(responce.data.data);
-      console.log(responce.data.data)
-    }
-    else{
-      toast.error("Error")
+    try {
+      console.log("Fetching all orders from:", url+"/api/order/list");
+      const responce = await axios.get(url+"/api/order/list");
+      console.log("All orders response:", responce.data);
+      if(responce.data.success){
+        setOrders(responce.data.data || []);
+      }
+      else{
+        console.error("Orders fetch failed:", responce.data.message);
+        toast.error(responce.data.message || "Error fetching orders")
+      }
+    } catch(error) {
+      console.error("Error fetching orders:", error.response?.data || error.message);
+      if(error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Not authorized. Please login again.");
+      } else if(error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Error fetching orders")
+      }
     }
   }
 
   const statusHandler = async (event, orderId) => {
+    try {
       const responce = await axios.post(url+"/api/order/status",{
         orderId,
         status: event.target.value
-      })
+      });
       if(responce.data.success){
         await fetchAllOrders();
         toast.success("Status Updated")
       }
-}
+      else{
+        toast.error(responce.data.message || "Error updating status")
+      }
+    } catch(error) {
+      console.error("Error updating status:", error);
+      if(error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Not authorized. Please login again.");
+      } else if(error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Error updating status")
+      }
+    }
+  }
 
   useEffect(()=> {
     fetchAllOrders();
@@ -41,7 +68,8 @@ const Orders = ({url}) => {
     <div className='order add'>
       <h3>Order page</h3>
       <div className="order-list">
-        {orders.map((order,index)=>(
+        {orders && orders.length > 0 ? (
+          orders.map((order,index)=>(
           <div key={index} className="order-item">
             <img src={assets.parcel_icon} alt="" />
             <div>
@@ -74,7 +102,10 @@ const Orders = ({url}) => {
               <option value="Delivered">Delivered</option>
             </select>
           </div>
-        ))}
+        ))
+        ) : (
+          <p style={{textAlign: 'center', padding: '20px'}}>No orders yet</p>
+        )}
       </div>
     </div>
   )

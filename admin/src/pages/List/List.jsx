@@ -21,13 +21,26 @@ const List = ({ url }) => {
   }
 
   const removeFood = async(foodId) => {
-    const response = await  axios.post(`${url}/api/food/remove`,{id:foodId})
-    await fetchList();
-    if(response.data.success){
-      toast.success(response.data.message)
-    }
-    else{
-      toast.error("Error");
+    try {
+      const response = await axios.post(`${url}/api/food/remove`, {id:foodId});
+      
+      if(response.data.success){
+        await fetchList();
+        toast.success(response.data.message)
+      }
+      else{
+        toast.error(response.data.message || "Error removing food")
+      }
+    } catch(error) {
+      console.error("Error removing food:", error);
+      
+      if(error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Not authorized. Please login again.");
+      } else if(error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Error removing food")
+      }
     }
   }
 

@@ -3,23 +3,34 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import Razorpay from "razorpay";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_TEST_API_KEY,
-  key_secret: process.env.RAZORPAY_SECRET_KEY,
-});
+let razorpay;
+if (process.env.RAZORPAY_TEST_API_KEY && process.env.RAZORPAY_SECRET_KEY) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_TEST_API_KEY,
+    key_secret: process.env.RAZORPAY_SECRET_KEY,
+  });
+}
 
 // Place user order and create Razorpay order
 const placeOrder = async (req, res) => {
 
-  const frontendUrl =  "http://localhost:5174"; // Replace with your actual frontend URL
+  const frontendUrl =  "http://localhost:5173"; // Replace with your actual frontend URL
 
   try {
-    const { userId, items, amount, address } = req.body;
+    const { items, amount, address } = req.body;
+    const userId = req.body.userId; // Get from auth middleware
 
     if (!userId || !items || !amount || !address) {
       return res.json({
         success: false,
-        message: "Missing required fields",
+        message: "Missing required fields: userId, items, amount, address",
+      });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.json({
+        success: false,
+        message: "Order items cannot be empty",
       });
     }
 
@@ -35,6 +46,14 @@ const placeOrder = async (req, res) => {
     });
 
     await newOrder.save();
+
+    // Check if Razorpay is configured
+    if (!razorpay) {
+      return res.json({
+        success: false,
+        message: "Payment gateway not configured. Please set Razorpay API keys.",
+      });
+    }
 
     // Create Razorpay order
     const options = {
@@ -58,7 +77,7 @@ const placeOrder = async (req, res) => {
     console.log("Place Order Error:", error);
     res.json({
       success: false,
-      message: "Error while placing order",
+      message: error.message || "Error while placing order",
     });
   }
 };
@@ -71,8 +90,18 @@ const verifyOrder = async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      userId,
     } = req.body;
+
+    const userId = req.body.userId; // Get from authMiddleware
+
+    console.log("Verifying order:", {orderId, userId});
+
+    if (!orderId || !razorpay_order_id) {
+      return res.json({
+        success: false,
+        message: "Missing order or razorpay details",
+      });
+    }
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
@@ -82,19 +111,25 @@ const verifyOrder = async (req, res) => {
       .digest("hex");
 
     if (expectedSignature === razorpay_signature) {
-      await orderModel.findByIdAndUpdate(orderId, {
+      const updatedOrder = await orderModel.findByIdAndUpdate(orderId, {
         payment: true,
       });
+      
+      console.log("Order payment verified, orderId:", orderId);
 
-      await userModel.findByIdAndUpdate(userId, {
-        cartData: {},
-      });
+      if (userId) {
+        await userModel.findByIdAndUpdate(userId, {
+          cartData: {},
+        });
+        console.log("Cart cleared for userId:", userId);
+      }
 
       res.json({
         success: true,
         message: "Payment verified successfully",
       });
     } else {
+      console.log("Signature verification failed");
       await orderModel.findByIdAndDelete(orderId);
       res.json({
         success: false,
@@ -105,7 +140,7 @@ const verifyOrder = async (req, res) => {
     console.log("Verify Order Error:", error);
     res.json({
       success: false,
-      message: "Error while verifying payment",
+      message: error.message || "Error while verifying payment",
     });
   }
 };
@@ -113,22 +148,30 @@ const verifyOrder = async (req, res) => {
 //user orders for frontend
 const userOrders = async (req, res) =>  {
   try{
-    const orders = await orderModel.find({userId:req.body.userId});
+    const userId = req.body.userId;
+    console.log("Fetching orders for userId:", userId);
+    if (!userId) {
+      return res.json({success:false, message:"User ID not found in request"});
+    }
+    const orders = await orderModel.find({userId});
+    console.log("Found", orders.length, "orders for user", userId);
     res.json({success:true, data:orders})
   }catch (error) {
-    console.log(error)
-      res.json({success:false,message:"Error"})
+    console.log("Error fetching user orders:", error);
+    res.json({success:false, message:error.message || "Error fetching orders"})
   }
 }
 
 //Listing orders for admin panel
 const listOrders = async (req, res) => {
   try {
+    console.log("Fetching all orders for admin");
     const orders = await orderModel.find({});
+    console.log("Found", orders.length, "total orders");
     res.json({ success: true, data:orders})
   } catch (error) {
-    console.log(error);
-    res.json({success:false, message:"Error fetching orders"})
+    console.log("Error fetching all orders:", error);
+    res.json({success:false, message:error.message || "Error fetching orders"})
   }
 }
 

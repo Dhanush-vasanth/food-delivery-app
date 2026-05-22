@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 
 const PlaceOrder = () => {
 
-  const {getTotalCartAmount,token,food_list,cartItems,url} = useContext(StoreContext)
+  const {getTotalCartAmount,token,food_list,cartItems,url,setToken} = useContext(StoreContext)
 
   const [data,setData] = useState({
     firstName:"",
@@ -30,67 +30,109 @@ const PlaceOrder = () => {
  const placeOrder = async (event) => {
   event.preventDefault();
 
-  const orderItems = [];
-  food_list.forEach((item) => {
-    if (cartItems[item._id] > 0) {
-      orderItems.push({ ...item, quantity: cartItems[item._id] });
+  try {
+    if (!token) {
+      alert("Please login first");
+      navigate('/');
+      return;
     }
-  });
 
-  const orderData = {
-    address: data,
-    items: orderItems,
-    amount: getTotalCartAmount() + 60,
-  };
+    if (!food_list || food_list.length === 0) {
+      alert("Food list not loaded. Please go back and try again.");
+      return;
+    }
 
-  const response = await axios.post(url + "/api/order/place", orderData, { headers: { token } });
+    const orderItems = [];
+    food_list.forEach((item) => {
+      if (cartItems[item._id] && cartItems[item._id] > 0) {
+        orderItems.push({ ...item, quantity: cartItems[item._id] });
+      }
+    });
 
-  if (!response.data.success) {
-    alert("Error placing order");
-    return;
-  }
+    if (orderItems.length === 0) {
+      alert("Your cart is empty. Please add items before placing an order.");
+      return;
+    }
 
-  const { key, amount, currency, razorpay_order_id, orderId } = response.data;
+    const orderData = {
+      address: data,
+      items: orderItems,
+      amount: getTotalCartAmount() + 60,
+    };
 
-  const options = {
-    key,
-    amount,
-    currency,
-    name: "Food Del",
-    description: "Order Payment",
-    order_id: razorpay_order_id,
-    handler: async function (rzpResponse) {
-      try {
-      const verifyRes = await axios.post(
-        url + "/api/order/verify",
-        {
-          orderId,
-          razorpay_order_id: rzpResponse.razorpay_order_id,
-          razorpay_payment_id: rzpResponse.razorpay_payment_id,
-          razorpay_signature: rzpResponse.razorpay_signature,
-        },
-        { headers: { token } }
-      );
+    console.log("Placing order with data:", orderData);
 
-        if (verifyRes.data.success) {
-              window.location.replace(`/verify?success=true&orderId=${orderId}`)
-            } else {
+    const response = await axios.post(url + "/api/order/place", orderData, { headers: { token } });
+
+    console.log("Order response:", response.data);
+
+    if (!response.data.success) {
+      const errorMsg = response.data.message || "Error placing order";
+      if (errorMsg.includes("Invalid") || errorMsg.includes("expired")) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        setToken("");
+        navigate('/');
+      } else {
+        alert(errorMsg);
+      }
+      return;
+    }
+
+    const { key, amount, currency, razorpay_order_id, orderId } = response.data;
+
+    const options = {
+      key,
+      amount,
+      currency,
+      name: "Food Del",
+      description: "Order Payment",
+      order_id: razorpay_order_id,
+      handler: async function (rzpResponse) {
+        try {
+        const verifyRes = await axios.post(
+          url + "/api/order/verify",
+          {
+            orderId,
+            razorpay_order_id: rzpResponse.razorpay_order_id,
+            razorpay_payment_id: rzpResponse.razorpay_payment_id,
+            razorpay_signature: rzpResponse.razorpay_signature,
+          },
+          { headers: { token } }
+        );
+
+          if (verifyRes.data.success) {
+                window.location.replace(`/verify?success=true&orderId=${orderId}`)
+              } else {
+                window.location.replace(`/verify?success=false&orderId=${orderId}`)
+              }
+            } catch (error){
+              console.log("Payment Verification Error:", error);
               window.location.replace(`/verify?success=false&orderId=${orderId}`)
             }
-          } catch (error){
-            console.log("Payment Verification Error:", error);
-            window.location.replace(`/verify?success=false&orderId=${orderId}`)
-          }
-    },
-    prefill: {
-      name: data.firstName + " " + data.lastName,
-      email: data.email,
-      contact: data.phone,
-    },
-  };
+      },
+      prefill: {
+        name: data.firstName + " " + data.lastName,
+        email: data.email,
+        contact: data.phone,
+      },
+    };
 
-  const rzp = new window.Razorpay(options);
-  rzp.open();
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch(error) {
+    console.error("Place order error:", error);
+    const errorMsg = error.response?.data?.message || error.message || "Error placing order";
+    
+    if (error.response?.status === 401 || errorMsg.includes("Invalid") || errorMsg.includes("expired")) {
+      alert("Session expired. Please login again.");
+      localStorage.removeItem("token");
+      setToken("");
+      navigate('/');
+    } else {
+      alert(errorMsg);
+    }
+  }
 };
 
 const navigate = useNavigate();

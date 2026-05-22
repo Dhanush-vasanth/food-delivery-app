@@ -12,7 +12,7 @@ const Add = ({ url }) => {
     name:"",
     description:"",
     price:"" ,
-    category:"salad"
+    category:"Salad"
   })
   
 
@@ -24,25 +24,70 @@ const Add = ({ url }) => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault()
-    const formData = new FormData()
-    formData.append("name",data.name)
-    formData.append("description",data.description)
-    formData.append("price",Number(data.price))
-    formData.append("category",data.category)
-    formData.append("image",image)
-    const response = await axios.post(`${url}/api/food/add`, formData);
-    if(response.data.success){
-      setData({
-        name:"",
-        description:"",
-        price:"" ,
-        category:"salad"
-      })
-      setImage(false)
-      toast.success(response.data.message)
+    
+    // Validate inputs
+    if(!image) {
+      toast.error("Please select an image");
+      return;
     }
-    else{
-      toast.error(response.data.message)
+    
+    if(!data.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    
+    if(!data.description.trim()) {
+      toast.error("Product description is required");
+      return;
+    }
+    
+    if(!data.price || data.price <= 0) {
+      toast.error("Valid product price is required");
+      return;
+    }
+    
+    const formData = new FormData()
+    formData.append("name", data.name)
+    formData.append("description", data.description)
+    formData.append("price", Number(data.price))
+    formData.append("category", data.category)
+    formData.append("image", image)
+    
+    try {
+      console.log("Adding food with data:", { name: data.name, category: data.category, price: data.price });
+      
+      const response = await axios.post(`${url}/api/food/add`, formData);
+      
+      console.log("Response:", response.data);
+      
+      if(response.data.success){
+        setData({
+          name:"",
+          description:"",
+          price:"" ,
+          category:"Salad"
+        })
+        setImage(false)
+        toast.success(response.data.message)
+      }
+      else{
+        toast.error(response.data.message || "Failed to add food item")
+      }
+    } catch(error) {
+      console.error("Error details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message,
+        responseData: error.response?.data
+      });
+      
+      if(error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Not authorized. Please login again.");
+      } else if(error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Failed to add food item")
+      }
     }
   }
 
