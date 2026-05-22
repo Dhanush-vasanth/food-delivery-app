@@ -14,7 +14,7 @@ import { toast } from 'react-toastify'
 
 const App = () => {
 
-  const url = "http://localhost:4000";
+  const url = "https://food-delivery-app-e4z1.onrender.com";
   const [adminToken, setAdminToken] = useState(localStorage.getItem("adminToken") || "");
   const [credentials, setCredentials] = useState({ email: "", password: "" });
 
